@@ -1,6 +1,4 @@
 
-
-
 const redisClient = require("../config/redis");
 const User =  require("../models/user")
 const validate = require('../utils/validator');
@@ -48,16 +46,16 @@ const login = async (req,res)=>{
         const {emailId, password} = req.body;
 
         if(!emailId)
-            throw new Error("Invalid Credentials");
+            throw new Error("Invalid Email Id");
         if(!password)
-            throw new Error("Invalid Credentials");
+            throw new Error("Invalid Password");
 
         const user = await User.findOne({emailId});
 
         const match = await bcrypt.compare(password,user.password);
 
         if(!match)
-            throw new Error("Invalid Credentials");
+            throw new Error("Password is Incorrect");
 
         const reply = {
             firstName: user.firstName,
@@ -93,8 +91,11 @@ const logout = async(req,res)=>{
         const {token} = req.cookies;
         const payload = jwt.decode(token);
 
-
+        
+        // redis key value pair me data store karta hai
         await redisClient.set(`token:${token}`,'Blocked');
+
+        // 1 Jan,, 1970 se expire karna hai
         await redisClient.expireAt(`token:${token}`,payload.exp);
     //    Token add kar dung Redis ke blockList
     //    Cookies ko clear kar dena.....
